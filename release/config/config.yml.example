@@ -1,0 +1,78 @@
+Log:
+  Level: none # Log level: none, error, warning, info, debug
+  AccessPath: # /etc/NodeX/access.Log
+  ErrorPath: # /etc/NodeX/error.log
+DnsConfigPath: # /etc/NodeX/dns.json # Path to dns config, check https://xtls.github.io/config/dns.html for help
+RouteConfigPath: #/etc/NodeX/route.json # Path to route config, check https://xtls.github.io/config/routing.html for help
+InboundConfigPath: # /etc/NodeX/custom_inbound.json # Path to custom inbound config, check https://xtls.github.io/config/inbound.html for help
+OutboundConfigPath: #/etc/NodeX/custom_outbound.json # Path to custom outbound config, check https://xtls.github.io/config/outbound.html for help
+ConnectionConfig:
+  Handshake: 3
+  ConnIdle: 1000
+  UplinkOnly: 2
+  DownlinkOnly: 4 
+  BufferSize: 64 
+Nodes:
+  - PanelType: "NewV2board" # Panel type: Xpanel, SSpanel, NewV2board, PMpanel, Proxypanel
+    ApiConfig:
+      ApiHost: "https://LinkWeb.com"
+      ApiKey: "apikey"
+      NodeID: 1
+      NodeType: $NodeType # Node type: V2ray, Shadowsocks, Trojan, Shadowsocks-Plugin
+      Timeout: 30 
+      EnableVless: $EnableVless
+      EnableXTLS: false 
+      SpeedLimit: 0 
+      DeviceLimit: 0 
+      RuleListPath: # /etc/NodeX/rulelist 
+      DisableCustomConfig: false 
+    ControllerConfig:
+      DisableSniffing: True
+      ListenIP: 0.0.0.0 
+      SendIP: 0.0.0.0 
+      UpdatePeriodic: 10 
+      DeviceOnlineMinTraffic: 1024 
+      EnableDNS: false 
+      DNSType: AsIs 
+      EnableProxyProtocol: false 
+      CertConfig:
+        CertMode: file
+        CertDomain: "google.com"
+        CertFile: /etc/NodeX/nodex.crt 
+        KeyFile: /etc/NodeX/nodex.key
+        Provider: cloudflare
+        Email: test@me.com
+        DNSEnv: 
+          ALICLOUD_ACCESS_KEY: aaa
+          ALICLOUD_SECRET_KEY: bbb
+  - PanelType: "NewV2board" # Panel type: Xpanel, SSpanel, NewV2board, PMpanel, Proxypanel
+    ApiConfig:
+      ApiHost: "https://LinkWeb.com"
+      ApiKey: "apikey"
+      NodeID: 1
+      NodeType: $NodeType # Node type: V2ray, Shadowsocks, Trojan, Shadowsocks-Plugin
+      Timeout: 30 
+      EnableVless: $EnableVless
+      EnableXTLS: false  
+      SpeedLimit: 0 
+      DeviceLimit: 0 
+      RuleListPath: # /etc/NodeX/rulelist 
+    ControllerConfig:
+      DisableSniffing: True
+      ListenIP: 0.0.0.0 
+      SendIP: 0.0.0.0 
+      UpdatePeriodic: 10 
+      DeviceOnlineMinTraffic: 1024 
+      EnableDNS: false 
+      DNSType: AsIs 
+      EnableProxyProtocol: false 
+      CertConfig:
+        CertMode: file
+        CertDomain: "google.com"
+        CertFile: /etc/NodeX/nodex.crt 
+        KeyFile: /etc/NodeX/nodex.key
+        Provider: cloudflare
+        Email: test@me.com
+        DNSEnv: 
+          ALICLOUD_ACCESS_KEY: aaa
+          ALICLOUD_SECRET_KEY: bbb          
