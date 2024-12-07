@@ -1,4 +1,4 @@
-# NodeX
+# NodeX - Beta Version
 
 [![](https://img.shields.io/badge/Admin-@zeperix-blue.svg)](https://t.me/zeronxdev)
 ![](https://img.shields.io/github/stars/zeperix/NodeX)
