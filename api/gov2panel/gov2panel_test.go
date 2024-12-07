@@ -3,8 +3,8 @@ package gov2panel_test
 import (
 	"testing"
 
-	"github.com/zeperix/NodeX/api"
-	"github.com/zeperix/NodeX/api/gov2panel"
+	"github.com/wyx2685/XrayR/api"
+	"github.com/wyx2685/XrayR/api/gov2panel"
 )
 
 func CreateClient() api.API {

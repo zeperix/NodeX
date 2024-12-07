@@ -6,10 +6,10 @@ import (
 	"os"
 	"sync"
 
-	"github.com/zeperix/NodeX/api/bunpanel"
-	"github.com/zeperix/NodeX/api/gov2panel"
-	"github.com/zeperix/NodeX/api/newV2board"
-	"github.com/zeperix/NodeX/app/mydispatcher"
+	"github.com/wyx2685/XrayR/api/bunpanel"
+	"github.com/wyx2685/XrayR/api/gov2panel"
+	"github.com/wyx2685/XrayR/api/newV2board"
+	"github.com/wyx2685/XrayR/app/mydispatcher"
 
 	"dario.cat/mergo"
 	"github.com/r3labs/diff/v2"
@@ -19,14 +19,14 @@ import (
 	"github.com/xtls/xray-core/core"
 	"github.com/xtls/xray-core/infra/conf"
 
-	"github.com/zeperix/NodeX/api"
-	"github.com/zeperix/NodeX/api/pmpanel"
-	"github.com/zeperix/NodeX/api/proxypanel"
-	"github.com/zeperix/NodeX/api/sspanel"
-	"github.com/zeperix/NodeX/api/v2raysocks"
-	_ "github.com/zeperix/NodeX/cmd/distro/all"
-	"github.com/zeperix/NodeX/service"
-	"github.com/zeperix/NodeX/service/controller"
+	"github.com/wyx2685/XrayR/api"
+	"github.com/wyx2685/XrayR/api/pmpanel"
+	"github.com/wyx2685/XrayR/api/proxypanel"
+	"github.com/wyx2685/XrayR/api/sspanel"
+	"github.com/wyx2685/XrayR/api/v2raysocks"
+	_ "github.com/wyx2685/XrayR/cmd/distro/all"
+	"github.com/wyx2685/XrayR/service"
+	"github.com/wyx2685/XrayR/service/controller"
 )
 
 // Panel Structure
@@ -164,14 +164,7 @@ func (p *Panel) loadCore(panelConfig *Config) *core.Instance {
 func (p *Panel) Start() {
 	p.access.Lock()
 	defer p.access.Unlock()
-	log.Print(`
-	_   _           _     __   __
-   | \ | |         | |    \ \ / /
-   |  \| | ___   __| | ___ \ V / 
-   | . ` + "`" + ` |/ _ \ / _` + "`" + ` |/ _ \ > <  
-   | |\  | (_) | (_| |  __// . \ 
-   |_| \_|\___/ \__,_|\___/_/ \_\
-	   `)
+	log.Print("Start the panel..")
 	// Load Core
 	server := p.loadCore(p.panelConfig)
 	if err := server.Start(); err != nil {
@@ -217,7 +210,7 @@ func (p *Panel) Start() {
 	for _, s := range p.Service {
 		err := s.Start()
 		if err != nil {
-			log.Panicf("Panel Start fialed: %s", err)
+			log.Panicf("Panel Start failed: %s", err)
 		}
 	}
 	p.Running = true
@@ -231,7 +224,7 @@ func (p *Panel) Close() {
 	for _, s := range p.Service {
 		err := s.Close()
 		if err != nil {
-			log.Panicf("Panel Close fialed: %s", err)
+			log.Panicf("Panel Close failed: %s", err)
 		}
 	}
 	p.Service = nil

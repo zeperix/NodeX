@@ -1,8 +1,8 @@
 package panel
 
 import (
-	"github.com/zeperix/NodeX/api"
-	"github.com/zeperix/NodeX/service/controller"
+	"github.com/wyx2685/XrayR/api"
+	"github.com/wyx2685/XrayR/service/controller"
 )
 
 type Config struct {

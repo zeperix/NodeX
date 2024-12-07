@@ -1,8 +1,8 @@
 package controller
 
 import (
-	"github.com/zeperix/NodeX/common/limiter"
-	"github.com/zeperix/NodeX/common/mylego"
+	"github.com/wyx2685/XrayR/common/limiter"
+	"github.com/wyx2685/XrayR/common/mylego"
 )
 
 type Config struct {

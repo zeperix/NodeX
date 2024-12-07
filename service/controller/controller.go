@@ -15,10 +15,12 @@ import (
 	"github.com/xtls/xray-core/features/routing"
 	"github.com/xtls/xray-core/features/stats"
 
-	"github.com/zeperix/NodeX/api"
-	"github.com/zeperix/NodeX/app/mydispatcher"
-	"github.com/zeperix/NodeX/common/mylego"
-	"github.com/zeperix/NodeX/common/serverstatus"
+	"github.com/wyx2685/XrayR/api"
+	"github.com/wyx2685/XrayR/api/newV2board"
+	"github.com/wyx2685/XrayR/app/mydispatcher"
+	"github.com/wyx2685/XrayR/common/limiter"
+	"github.com/wyx2685/XrayR/common/mylego"
+	"github.com/wyx2685/XrayR/common/serverstatus"
 )
 
 type LimitInfo struct {
@@ -114,6 +116,14 @@ func (c *Controller) Start() error {
 		c.logger.Print(err)
 	}
 
+	// Update alive user list
+	if v2b, ok := c.apiClient.(*newV2board.APIClient); ok {
+		if v, ok := c.dispatcher.Limiter.InboundInfo.Load(c.Tag); ok {
+			inboundinfo := v.(*limiter.InboundInfo)
+			inboundinfo.AliveList = v2b.AliveMap.Alive
+		}
+	}
+
 	// Add Rule Manager
 	if !c.config.DisableGetRule {
 		if ruleList, err := c.apiClient.GetNodeRule(); err != nil {
@@ -207,6 +217,14 @@ func (c *Controller) nodeInfoMonitor() (err error) {
 	// Update User
 	var usersChanged = true
 	newUserInfo, err := c.apiClient.GetUserList()
+
+	// Update alive user list
+	if v2b, ok := c.apiClient.(*newV2board.APIClient); ok {
+		if v, ok := c.dispatcher.Limiter.InboundInfo.Load(c.Tag); ok {
+			inboundinfo := v.(*limiter.InboundInfo)
+			inboundinfo.AliveList = v2b.AliveMap.Alive
+		}
+	}
 	if err != nil {
 		if err.Error() == api.UserNotModified {
 			usersChanged = false
@@ -405,8 +423,8 @@ func (c *Controller) addInboundForSSPlugin(newNodeInfo api.NodeInfo) (err error)
 func (c *Controller) addNewUser(userInfo *[]api.UserInfo, nodeInfo *api.NodeInfo) (err error) {
 	users := make([]*protocol.User, 0)
 	switch nodeInfo.NodeType {
-	case "V2ray":
-		if nodeInfo.EnableVless {
+	case "V2ray", "Vmess", "Vless":
+		if nodeInfo.EnableVless || (nodeInfo.NodeType == "Vless" && nodeInfo.NodeType != "Vmess") {
 			users = c.buildVlessUser(userInfo)
 		} else {
 			users = c.buildVmessUser(userInfo)

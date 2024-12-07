@@ -19,24 +19,24 @@ import (
 	"github.com/xtls/xray-core/common/net"
 	"github.com/xtls/xray-core/infra/conf"
 
-	"github.com/zeperix/NodeX/api"
+	"github.com/wyx2685/XrayR/api"
 )
 
 // APIClient create an api client to the panel.
 type APIClient struct {
-	client           *resty.Client
-	APIHost          string
-	NodeID           int
-	Key              string
-	NodeType         string
-	EnableVless      bool
-	VlessFlow        string
-	SpeedLimit       float64
-	DeviceLimit      int
-	LocalRuleList    []api.DetectRule
-	LastReportOnline map[int]int
-	resp             atomic.Value
-	eTags            map[string]string
+	client        *resty.Client
+	APIHost       string
+	NodeID        int
+	Key           string
+	NodeType      string
+	EnableVless   bool
+	VlessFlow     string
+	SpeedLimit    float64
+	DeviceLimit   int
+	LocalRuleList []api.DetectRule
+	resp          atomic.Value
+	eTags         map[string]string
+	AliveMap      *AliveMap
 }
 
 // New create an api instance
@@ -85,6 +85,7 @@ func New(apiConfig *api.Config) *APIClient {
 		DeviceLimit:   apiConfig.DeviceLimit,
 		LocalRuleList: localRuleList,
 		eTags:         make(map[string]string),
+		AliveMap:      &AliveMap{},
 	}
 	return apiClient
 }
@@ -185,7 +186,7 @@ func (c *APIClient) GetNodeInfo() (nodeInfo *api.NodeInfo, err error) {
 	c.resp.Store(server)
 
 	switch c.NodeType {
-	case "V2ray":
+	case "V2ray", "Vmess", "Vless":
 		nodeInfo, err = c.parseV2rayNodeResponse(server)
 	case "Trojan":
 		nodeInfo, err = c.parseTrojanNodeResponse(server)
@@ -208,7 +209,7 @@ func (c *APIClient) GetUserList() (UserList *[]api.UserInfo, err error) {
 	path := "/api/v1/server/UniProxy/user"
 
 	switch c.NodeType {
-	case "V2ray", "Trojan", "Shadowsocks":
+	case "V2ray", "Trojan", "Shadowsocks", "Vmess", "Vless":
 		break
 	default:
 		return nil, fmt.Errorf("unsupported node type: %s", c.NodeType)
@@ -218,6 +219,8 @@ func (c *APIClient) GetUserList() (UserList *[]api.UserInfo, err error) {
 		SetHeader("If-None-Match", c.eTags["users"]).
 		ForceContentType("application/json").
 		Get(path)
+
+	_, _ = c.GetUserAlive()
 
 	// Etag identifier for a specific version of a resource. StatusCode = 304 means no changed
 	if res.StatusCode() == 304 {
@@ -238,7 +241,7 @@ func (c *APIClient) GetUserList() (UserList *[]api.UserInfo, err error) {
 		return nil, errors.New("users is null")
 	}
 
-	var deviceLimit, localDeviceLimit int = 0, 0
+	var deviceLimit int = 0
 	var userList []api.UserInfo
 	for _, user := range users {
 		u := api.UserInfo{
@@ -258,23 +261,6 @@ func (c *APIClient) GetUserList() (UserList *[]api.UserInfo, err error) {
 			deviceLimit = user.DeviceLimit
 		}
 
-		// If there is still device available, add the user
-		if deviceLimit > 0 && user.AliveIp > 0 {
-			lastOnline := 0
-			if v, ok := c.LastReportOnline[user.Id]; ok {
-				lastOnline = v
-			}
-			// If there are any available device.
-			if localDeviceLimit = deviceLimit - user.AliveIp + lastOnline; localDeviceLimit > 0 {
-				deviceLimit = localDeviceLimit
-				// If this backend server has reported any user in the last reporting period.
-			} else if lastOnline > 0 {
-				deviceLimit = lastOnline
-				// Remove this user.
-			} else {
-				continue
-			}
-		}
 		u.DeviceLimit = deviceLimit
 		u.Email = u.UUID + "@v2board.user"
 		if c.NodeType == "Shadowsocks" {
@@ -285,6 +271,30 @@ func (c *APIClient) GetUserList() (UserList *[]api.UserInfo, err error) {
 	}
 
 	return &userList, nil
+}
+
+// GetUserAlive will fetch the alive_ip count for users
+func (c *APIClient) GetUserAlive() (map[int]int, error) {
+	const path = "/api/v1/server/UniProxy/alivelist"
+	r, err := c.client.R().
+		ForceContentType("application/json").
+		Get(path)
+	if err != nil || r.StatusCode() > 399 {
+		c.AliveMap.Alive = make(map[int]int)
+		return nil, nil
+	}
+
+	if r != nil {
+		defer r.RawResponse.Body.Close()
+	} else {
+		return nil, fmt.Errorf("received nil response")
+	}
+	c.AliveMap = &AliveMap{}
+	if err := json.Unmarshal(r.Body(), c.AliveMap); err != nil {
+		return nil, fmt.Errorf("unmarshal user alive list error: %s", err)
+	}
+
+	return c.AliveMap.Alive, nil
 }
 
 // ReportUserTraffic reports the user traffic
@@ -331,18 +341,11 @@ func (c *APIClient) ReportNodeStatus(nodeStatus *api.NodeStatus) (err error) {
 
 // ReportNodeOnlineUsers implements the API interface
 func (c *APIClient) ReportNodeOnlineUsers(onlineUserList *[]api.OnlineUser) error {
-	reportOnline := make(map[int]int)
 	data := make(map[int][]string)
 	for _, onlineuser := range *onlineUserList {
 		// json structure: { UID1:["ip1","ip2"],UID2:["ip3","ip4"] }
 		data[onlineuser.UID] = append(data[onlineuser.UID], onlineuser.IP)
-		if _, ok := reportOnline[onlineuser.UID]; ok {
-			reportOnline[onlineuser.UID]++
-		} else {
-			reportOnline[onlineuser.UID] = 1
-		}
 	}
-	c.LastReportOnline = reportOnline // Update LastReportOnline
 
 	path := "/api/v1/server/UniProxy/alive"
 	res, err := c.client.R().SetBody(data).ForceContentType("application/json").Post(path)
@@ -478,18 +481,17 @@ func (c *APIClient) parseV2rayNodeResponse(s *serverConfig) (*api.NodeInfo, erro
 				header = httpHeader
 			}
 		}
-	case "h2":
-		if s.NetworkSettings.Header != nil {
-			if httpHeader, err := s.NetworkSettings.Header.MarshalJSON(); err != nil {
+	case "httpupgrade", "xhttp":
+		if s.NetworkSettings.Headers != nil {
+			if httpHeaders, err := s.NetworkSettings.Headers.MarshalJSON(); err != nil {
 				return nil, err
 			} else {
-				header = httpHeader
+				b, _ := simplejson.NewJson(httpHeaders)
+				host = b.Get("Host").MustString()
 			}
 		}
 		if s.NetworkSettings.Host != "" {
 			host = s.NetworkSettings.Host
-		} else {
-			host = "www.example.com"
 		}
 	}
 

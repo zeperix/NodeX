@@ -7,15 +7,15 @@ import (
 )
 
 var (
-	version  = "1.0.2"
-	codename = "NodeX"
-	intro    = "Backend For Panel VPN"
+	version  = "0.9.4"
+	codename = "XrayR"
+	intro    = "A Xray backend that supports many panels"
 )
 
 func init() {
 	rootCmd.AddCommand(&cobra.Command{
 		Use:   "version",
-		Short: "Print current version of NodeX",
+		Short: "Print current version of XrayR",
 		Run: func(cmd *cobra.Command, args []string) {
 			showVersion()
 		},

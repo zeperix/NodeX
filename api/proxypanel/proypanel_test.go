@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/zeperix/NodeX/api"
-	"github.com/zeperix/NodeX/api/proxypanel"
+	"github.com/wyx2685/XrayR/api"
+	"github.com/wyx2685/XrayR/api/proxypanel"
 )
 
 func CreateClient() api.API {
@@ -154,8 +154,8 @@ func TestReportIllegal(t *testing.T) {
 	client := CreateClient()
 
 	detectResult := []api.DetectResult{
-		{1, 1},
-		{1, 2},
+		{UID: 1, RuleID: 1},
+		{UID: 1, RuleID: 2},
 	}
 	client.Debug()
 	err := client.ReportIllegal(&detectResult)

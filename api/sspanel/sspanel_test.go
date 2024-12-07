@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/zeperix/NodeX/api"
-	"github.com/zeperix/NodeX/api/sspanel"
+	"github.com/wyx2685/XrayR/api"
+	"github.com/wyx2685/XrayR/api/sspanel"
 )
 
 func CreateClient() api.API {
@@ -148,8 +148,8 @@ func TestReportIllegal(t *testing.T) {
 	client := CreateClient()
 
 	detectResult := []api.DetectResult{
-		{1, 2},
-		{1, 3},
+		{UID: 1, RuleID: 2},
+		{UID: 1, RuleID: 3},
 	}
 	client.Debug()
 	err := client.ReportIllegal(&detectResult)
