@@ -80,4 +80,4 @@ Dự án này chỉ là học tập, phát triển và bảo trì cá nhân củ
 
 ## TELEGRAM ADMIN
 
-* [@ZeronXDEV](https://t.me/zeperix)
+* [@ZeronXDEV](https://t.me/zeronxdev)
